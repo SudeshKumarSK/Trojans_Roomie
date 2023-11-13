@@ -6,7 +6,6 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import MakePostPage from "./pages/MakePostPage";
 import ProfilePage from "./pages/ProfilePage";
-import ListingPage from "./pages/ListingPage";
 
 const App: React.FC = () => {
   return (
@@ -17,7 +16,6 @@ const App: React.FC = () => {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/make-a-post" element={<MakePostPage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/listing" element={<ListingPage />} />
       </Routes>
     </Router>
   );
