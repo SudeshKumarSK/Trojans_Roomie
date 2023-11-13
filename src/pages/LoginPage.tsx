@@ -10,7 +10,11 @@ const LoginPage: React.FC = () => {
     navigate("/");
   };
   return (
-    <div>
+    <div className="page-content">
+      <button onClick={() => navigate("/")} className="back-home-button">
+        Back to Home
+      </button>
+      <h1>Login In</h1>
       <p>Sign in with Google to continue</p>
       <button onClick={signInWithGoogle}>Sign In With Google</button>
     </div>
