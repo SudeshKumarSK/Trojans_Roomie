@@ -1,0 +1,13 @@
+.signin-container {
+  background-color: rgba(232, 226, 226, 0.3);
+  backdrop-filter: blur(2px);
+  min-height: 100px;
+  padding: 20px;
+  color: white;
+}
+
+.bg-img {
+  background-image: url("../../assets/usc_night.jpeg");
+  background-size: cover;
+  background-repeat: no-repeat;
+}
