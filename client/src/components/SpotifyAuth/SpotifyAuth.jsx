@@ -25,7 +25,6 @@ const SpotifyAuth = () => {
 
   const [hasDisconnected, setHasDisconnected] = useState(false);
 
-
   const handleConnect = () => {
     setHasDisconnected(false);
     window.location.href = import.meta.env.VITE_SPOTIFY_AUTH_URL;
@@ -149,8 +148,7 @@ const SpotifyAuth = () => {
       )}
 
       <p className="text-green-700 mt-5 text-center text-md font-semibold">
-        {isSpotifyConnected &&
-          "Spotify User Connected Successfully!"}
+        {isSpotifyConnected && "Spotify User Connected Successfully!"}
       </p>
       <p className="text-red-700 mt-5 text-center text-md font-semibold">
         {hasDisconnected && !isSpotifyConnected && "Spotify Disconnected!"}
