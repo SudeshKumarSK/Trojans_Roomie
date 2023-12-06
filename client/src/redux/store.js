@@ -1,6 +1,6 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import userReducer from "./user/userSlice";
-import spotifyReducer from "./spotify/spotifySlice"; // Import your new Spotify slice
+import spotifyReducer from "./spotify/spotifySlice"; 
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 
