@@ -1,5 +1,5 @@
 import express from "express";
-import { handleAuthCallback, fetchSpotifyData, disconnectSpotify, refreshAccessToken } from "../controllers/spotify.controller.js";
+import { handleAuthCallback, disconnectSpotify, refreshAccessToken, fetchSpotifyData, } from "../controllers/spotify.controller.js";
 import { verifyToken } from "../utils/verifyUser.js";
 const router = express.Router();
 
