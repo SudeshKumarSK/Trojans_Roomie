@@ -69,7 +69,7 @@ export async function handleAuthCallback(req, res, next) {
 }
 
 
-export async function disconnectSpotify(req, res) {
+export async function disconnectSpotify(req, res, next) {
     try {
 
         if (req.user.id !== req.params.id) {
@@ -83,7 +83,8 @@ export async function disconnectSpotify(req, res) {
             spotifyProfileData: {}
         });
 
-        res.status(200).send('Spotify account disconnected');
+        res.status(200).json({ message: 'Spotify account disconnected' });
+
 
     } catch (error) {
         console.error(error);
