@@ -17,7 +17,7 @@ export const spotifySlice = createSlice({
 
         spotifySuccess: (state, action) => {
             state.spotifyLoading = false;
-            state.spotifyData = action.payload; // Assume payload contains Spotify data
+            state.spotifyData = action.payload; 
             state.spotifyError = null;
         },
 
@@ -27,10 +27,9 @@ export const spotifySlice = createSlice({
         },
 
         // If you need to clear Spotify data upon user sign out
-        clearSpotifyData: (state) => {
+        spotifyDisconnect: (state) => {
             state.spotifyData = null;
             state.spotifyError = null;
-            // Don't forget to reset loading if needed
             state.spotifyLoading = false;
         },
     },
@@ -41,7 +40,7 @@ export const {
     spotifyStart,
     spotifySuccess,
     spotifyFailure,
-    clearSpotifyData,
+    spotifyDisconnect,
 } = spotifySlice.actions;
 
 // Export reducer
