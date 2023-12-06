@@ -52,7 +52,6 @@ export async function handleAuthCallback(req, res, next) {
                     spotifyAccessToken: tokenData.access_token,
                     spotifyRefreshToken: tokenData.refresh_token,
                     spotifyTokenExpiry: new Date(new Date().getTime() + tokenData.expires_in * 1000),
-                    spotifyProfileData: {}
                 },
             },
             { new: true }
@@ -84,8 +83,8 @@ export async function disconnectSpotify(req, res) {
             spotifyProfileData: {}
         });
 
-        res.send('Spotify account disconnected');
-        
+        res.status(200).send('Spotify account disconnected');
+
     } catch (error) {
         console.error(error);
         const statusCode = error.statusCode || 500;
