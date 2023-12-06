@@ -4,8 +4,6 @@ const initialState = {
     currentUser: null,
     loading: false,
     error: false,
-    spotifyError: false,
-    spotifyLoading: false
 };
 
 const userSlice = createSlice({
@@ -69,22 +67,8 @@ const userSlice = createSlice({
             state.error = false;
         },
 
-        spotifyStart: (state) => {
-            state.spotifyLoading = true;
-        },
-        spotifySuccess: (state, action) => {
-            state.spotifyLoading = false;
-            state.currentUser = action.payload;
-            state.spotifyError = false;
-        },
-        spotifyFailure: (state, action) => {
-            state.spotifyLoading = false;
-            state.spotifyError = action.payload.message || 'Something went wrong!';
-
-        },
     },
 });
-
 export const { signInStart,
     signInSuccess,
     signInFailure,
@@ -97,9 +81,6 @@ export const { signInStart,
     deleteUserFailure,
     deleteUserStart,
     deleteUserSuccess,
-    signOut,
-    spotifyStart,
-    spotifySuccess,
-    spotifyFailure } = userSlice.actions;
+    signOut } = userSlice.actions;
 
 export default userSlice.reducer;
