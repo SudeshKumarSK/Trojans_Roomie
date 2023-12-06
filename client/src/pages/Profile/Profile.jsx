@@ -16,6 +16,7 @@ import {
   deleteUserSuccess,
   deleteUserFailure,
   signOut,
+  signOutFailure,
 } from "../../redux/user/userSlice";
 
 import SpotifyAuth from "../../components/SpotifyAuth";
@@ -31,6 +32,7 @@ const Profile = () => {
   const [imageError, setImageError] = useState(false);
   const [formData, setFormData] = useState({});
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     if (image) {
@@ -45,6 +47,7 @@ const Profile = () => {
     };
   }, []);
   const handleFileUpload = async (image) => {
+    setIsUpdating(true);
     const storage = getStorage(app);
     const fileName = new Date().getTime() + image.name;
     const storageRef = ref(storage, fileName);
@@ -58,9 +61,11 @@ const Profile = () => {
       },
       (error) => {
         setImageError(true);
+        setIsUpdating(false);
       },
       () => {
         setImageError(false);
+        setIsUpdating(false);
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           setFormData({ ...formData, profilePicture: downloadURL });
         });
@@ -102,6 +107,7 @@ const Profile = () => {
     setImageError(false);
     setImagePercent(0);
     e.preventDefault();
+    setIsUpdating(true);
     try {
       dispatch(updateUserStart());
       const res = await fetch(`/api/user/update/${currentUser._id}`, {
@@ -123,20 +129,36 @@ const Profile = () => {
       }
       dispatch(updateUserSuccess(data));
       setUpdateSuccess(true);
+      setIsUpdating(false);
     } catch (error) {
       setUpdateSuccess(false);
       dispatch(
         updateUserFailure({ message: error.message || "Something went wrong!" })
       );
+      setIsUpdating(false);
     }
   };
 
   const handleSignOut = async () => {
     try {
-      await fetch("/api/auth/signout");
+      const response = await fetch("/api/auth/signout");
+      const data = await response.json();
+
+      if (data.success === false) {
+        dispatch(
+          signOutFailure({
+            message: error.message || "Something went wrong!",
+          })
+        );
+        return;
+      }
+
       dispatch(signOut());
     } catch (error) {
       console.log(error);
+      dispatch(
+        signOutFailure({ message: error.message || "Something went wrong!" })
+      );
     }
   };
 
@@ -216,9 +238,12 @@ const Profile = () => {
 
             <button
               type="submit"
-              className="bg-slate-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl uppercase hover:opacity-90 disabled:opacity-60"
+              className={`bg-slate-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl uppercase hover:opacity-90 ${
+                isUpdating || loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={isUpdating || loading}
             >
-              {loading ? "Loading ..." : "Update"}
+              {loading ? "Loading..." : "Update"}
             </button>
           </form>
         </div>
@@ -252,8 +277,8 @@ const Profile = () => {
             />
           </div>
           <p className="text-md font-semibold text-center">
-            Authorize to connect your Spotify Account with Trojan Roomie to experience Music-Based
-            Roommate Matching{" "}
+            Authorize to connect your Spotify Account with Trojan Roomie to
+            experience Music-Based Roommate Matching{" "}
           </p>
           <p className="mb-4 text-sm text-red-700">*Terms & Conditions Apply</p>
 
