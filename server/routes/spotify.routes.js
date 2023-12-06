@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/callback/:id', verifyToken, handleAuthCallback);
 router.post('/refresh', verifyToken, refreshAccessToken);
 router.get('/fetch', verifyToken, fetchSpotifyData);
-router.post('/disconnect', verifyToken, disconnectSpotify);
+router.post('/disconnect/:id', verifyToken, disconnectSpotify);
 
 
 
