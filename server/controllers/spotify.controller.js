@@ -44,23 +44,43 @@ export async function handleAuthCallback(req, res, next) {
         const tokenData = await exchangeCodeForTokens(code);
         const userId = req.user.id;
 
-        // Save tokens to MongoDB
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            {
-                $set: {
-                    isSpotifyConnected: true,
-                    spotifyAccessToken: tokenData.access_token,
-                    spotifyRefreshToken: tokenData.refresh_token,
-                    spotifyTokenExpiry: new Date(new Date().getTime() + tokenData.expires_in * 1000),
-                },
-            },
-            { new: true }
-        );
+        setTimeout(async () => {
+            try {
+                const simulatedSpotifyData = {
+                    genres: ["Pop", "Rock", "Indie"],
+                    artists: ["Artist1", "Artist2", "Artist3"],
+                };
 
-        // Send a JSON response
-        const { password, ...rest } = updatedUser._doc;
-        res.status(200).json(rest);
+                const updatedUser = await User.findByIdAndUpdate(
+                    userId,
+                    {
+                        $set: {
+                            isSpotifyConnected: true,
+                            spotifyAccessToken: tokenData.access_token,
+                            spotifyRefreshToken: tokenData.refresh_token,
+                            spotifyTokenExpiry: new Date(new Date().getTime() + tokenData.expires_in * 1000),
+                            spotifyGenres: simulatedSpotifyData.genres,
+                            spotifyArtists: simulatedSpotifyData.artists
+                        },
+                    },
+                    { new: true }
+                );
+
+                const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
+                    spotifyGenres, spotifyArtists, ...userDetails } = updatedUser._doc;
+
+                const responseData = {
+                    spotify_data: { spotifyGenres, spotifyArtists },
+                    user_data: userDetails
+                };
+
+                res.status(200).json(responseData);
+            } catch (updateError) {
+                console.error(updateError);
+                next(errorHandler(500, 'Error updating user with Spotify data'));
+            }
+        }, 5000); // 5000 milliseconds (5 seconds) delay
+
     } catch (error) {
         console.error(error);
         const statusCode = error.statusCode || 500;
@@ -77,16 +97,27 @@ export async function disconnectSpotify(req, res, next) {
             return next(errorHandler(401, 'You can update only your account!'));
         }
         const userId = req.user.id;
-        await User.findByIdAndUpdate(userId, {
-            isSpotifyConnected: false,
-            spotifyAccessToken: null,
-            spotifyRefreshToken: null,
-            spotifyTokenExpiry: null,
-            spotifyGenres: [],
-            spotifyArtists: []
-        });
 
-        res.status(200).json({ message: 'Spotify account disconnected' });
+        const updatedUser = await User.findByIdAndUpdate(userId, {
+            $set: {
+                isSpotifyConnected: false,
+                spotifyAccessToken: null,
+                spotifyRefreshToken: null,
+                spotifyTokenExpiry: null,
+                spotifyGenres: [],
+                spotifyArtists: []
+            },
+        }, { new: true });
+
+
+        const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
+            spotifyGenres, spotifyArtists, ...userDetails } = updatedUser._doc;
+
+        const responseData = {
+            spotify_data: { spotifyGenres, spotifyArtists },
+            user_data: userDetails
+        };
+        res.status(200).json(responseData);
 
 
     } catch (error) {
