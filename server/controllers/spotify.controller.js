@@ -49,6 +49,7 @@ export async function handleAuthCallback(req, res, next) {
             userId,
             {
                 $set: {
+                    isSpotifyConnected: true,
                     spotifyAccessToken: tokenData.access_token,
                     spotifyRefreshToken: tokenData.refresh_token,
                     spotifyTokenExpiry: new Date(new Date().getTime() + tokenData.expires_in * 1000),
@@ -77,6 +78,7 @@ export async function disconnectSpotify(req, res, next) {
         }
         const userId = req.user.id;
         await User.findByIdAndUpdate(userId, {
+            isSpotifyConnected: false,
             spotifyAccessToken: null,
             spotifyRefreshToken: null,
             spotifyTokenExpiry: null,
