@@ -33,20 +33,13 @@ const userSchema = new mongoose.Schema(
             type: Date,
             default: null
         },
-        spotifyProfileData: {
-            type: {
-                genres: {
-                    type: [String], // favorite genres
-                    default: []
-                },
-                artists: {
-                    type: [String], // favorite artists
-                    default: []
-                },
-                // We can include additional fields later on as per requirement...
-            },
-            default: {}
-
+        spotifyGenres: {
+            type: [String], // Favorite genres
+            default: []
+        },
+        spotifyArtists: {
+            type: [String], // Favorite artists
+            default: []
         },
 
     },
