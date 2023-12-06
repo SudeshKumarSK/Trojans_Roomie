@@ -80,7 +80,8 @@ export async function disconnectSpotify(req, res, next) {
             spotifyAccessToken: null,
             spotifyRefreshToken: null,
             spotifyTokenExpiry: null,
-            spotifyProfileData: {}
+            spotifyGenres: [],
+            spotifyArtists: []
         });
 
         res.status(200).json({ message: 'Spotify account disconnected' });
@@ -92,4 +93,10 @@ export async function disconnectSpotify(req, res, next) {
         const message = error.message || 'Internal Server Error';
         next(errorHandler(statusCode, message));
     }
+}
+
+export async function refreshAccessToken(req, res, next) {
+}
+
+export async function fetchSpotifyData(req, res, next) {
 }
