@@ -19,6 +19,13 @@ import {
   signOutFailure,
 } from "../../redux/user/userSlice";
 
+import {
+  spotifyStart,
+  spotifySuccess,
+  spotifyFailure,
+  spotifyDisconnect,
+} from "../../redux/spotify/spotifySlice";
+
 import SpotifyAuth from "../../components/SpotifyAuth";
 import spotifyIcon from "../../assets/spotify_final.png";
 import "./profile.css";
@@ -92,6 +99,7 @@ const Profile = () => {
         );
         return;
       }
+      dispatch(spotifyDisconnect());
       dispatch(deleteUserSuccess(data));
     } catch (error) {
       dispatch(
@@ -150,9 +158,10 @@ const Profile = () => {
             message: error.message || "Something went wrong!",
           })
         );
+
         return;
       }
-
+      
       dispatch(signOut());
     } catch (error) {
       console.log(error);
