@@ -164,7 +164,7 @@ const Profile = () => {
 
   return (
     <div>
-      <div className="account-container mt-20 mb-10 w-3/4 md:max-w-xl mx-auto rounded-lg">
+      <div className="account-container mt-10 mb-10 w-3/4 md:max-w-xl mx-auto rounded-lg">
         <div className="flex flex-col items-center justify-center p-2">
           <h1 className="font-bold text-slate-100 text-2xl sm:text-3xl mb-4">
             Account Settings
@@ -264,7 +264,7 @@ const Profile = () => {
         </p>
       </div>
 
-      <div className="account-container mt-20 mb-10 w-3/4 md:max-w-xl mx-auto rounded-lg">
+      <div className="account-container mb-20 w-3/4 md:max-w-xl mx-auto rounded-lg">
         <div className="flex flex-col items-center justify-center p-2">
           <div className="flex justify-start gap-4 mb-4">
             <h1 className="font-bold text-slate-100 text-2xl sm:text-3xl mb-4">
