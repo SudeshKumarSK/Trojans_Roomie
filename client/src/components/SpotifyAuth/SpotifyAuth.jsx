@@ -54,6 +54,12 @@ const SpotifyAuth = () => {
             message: data.message || "Something went wrong!",
           })
         );
+
+        dispatch(
+          updateUserFailure({
+            message: data.message || "Something went wrong!",
+          })
+        );
         return;
       }
 
@@ -63,6 +69,12 @@ const SpotifyAuth = () => {
     } catch (error) {
       dispatch(
         spotifyFailure({
+          message: error.message || "Something went wrong!",
+        })
+      );
+
+      dispatch(
+        updateUserFailure({
           message: error.message || "Something went wrong!",
         })
       );
@@ -94,6 +106,12 @@ const SpotifyAuth = () => {
               message: data.message || "Something went wrong!",
             })
           );
+
+          dispatch(
+            updateUserFailure({
+              message: data.message || "Something went wrong!",
+            })
+          );
           return;
         }
         const { spotify_data, user_data } = data;
@@ -102,6 +120,12 @@ const SpotifyAuth = () => {
       } catch (error) {
         dispatch(
           spotifyFailure({
+            message: error.message || "Something went wrong!",
+          })
+        );
+
+        dispatch(
+          updateUserFailure({
             message: error.message || "Something went wrong!",
           })
         );
