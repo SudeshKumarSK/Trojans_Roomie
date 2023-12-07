@@ -32,7 +32,7 @@ async function fetchUserTopArtistsAndGenres(accessToken) {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Error fetching top Artists: ${response.statusText}`);
         }
 
         const data = await response.json();
@@ -137,12 +137,16 @@ export async function handleAuthCallback(req, res, next) {
         );
 
         const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
-            spotifyGenres, spotifyArtists, ...userDetails } = updatedUser._doc;
+            spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores, ...userDetails } = updatedUser._doc;
 
         const responseData = {
-            spotify_data: { spotifyGenres, spotifyArtists },
+            spotify_data: { spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores },
             user_data: userDetails
         };
+
+
+        // Calculate and update compatibility scores
+        await calculateCompatibilityScoresForAll(userId);
 
         res.status(200).json(responseData);
 
@@ -178,10 +182,10 @@ export async function disconnectSpotify(req, res, next) {
 
 
         const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
-            spotifyGenres, spotifyArtists, ...userDetails } = updatedUser._doc;
+            spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores, ...userDetails } = updatedUser._doc;
 
         const responseData = {
-            spotify_data: { spotifyGenres, spotifyArtists },
+            spotify_data: { spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores },
             user_data: userDetails
         };
         res.status(200).json(responseData);
@@ -199,3 +203,84 @@ export async function disconnectSpotify(req, res, next) {
 
 export async function refreshAccessToken(req, res, next) {
 };
+
+
+function calculateCompatibilityScore(currentUser, otherUser) {
+    // If either user hasn't connected their Spotify account, return -1
+    if (!currentUser.isSpotifyConnected || !otherUser.isSpotifyConnected) {
+        return -1;
+    }
+
+    let score = 0;
+
+    // Calculate a score based on the intersection of their top genres
+    const commonGenres = currentUser.spotifyGenres.filter(genre =>
+        otherUser.spotifyGenres.includes(genre)
+    );
+    score += commonGenres.length; // 1 point for each common genre
+
+    // Calculate a score based on the intersection of their top artists
+    const commonArtists = currentUser.spotifyArtists.filter(artist =>
+        otherUser.spotifyArtists.some(a => a.name === artist.name)
+    );
+    score += commonArtists.length * 3; // 3 points for each common artist (increased weight)
+
+    // Calculate a score based on the intersection of their top tracks
+    const commonTracks = currentUser.spotifyTracks.filter(track =>
+        otherUser.spotifyTracks.some(t => t.name === track.name)
+    );
+    score += commonTracks.length * 5; // 5 points for each common track (increased weight)
+
+    // Normalize the score to a scale of 0-100 (if needed)
+    const maxPossibleScore = currentUser.spotifyGenres.length +
+        (currentUser.spotifyArtists.length * 3) +
+        (currentUser.spotifyTracks.length * 5);
+
+    if (maxPossibleScore === 0) {
+        return 0; // Or another appropriate value when no comparison data is available
+    }
+    const normalizedScore = (score / maxPossibleScore) * 100;
+
+    return normalizedScore;
+}
+
+
+async function calculateAndUpdateScores(userId) {
+    const currentUser = await User.findById(userId);
+
+    // Fetch other users to calculate scores with
+    const otherUsers = await User.find({ _id: { $ne: userId } });
+
+    // An array to hold the updated scores
+    let updatedScores = [];
+
+    // For each other user, calculate the score and add it to the updatedScores array
+    for (const otherUser of otherUsers) {
+        const score = calculateCompatibilityScore(currentUser, otherUser);
+        updatedScores.push({ user: otherUser._id, score });
+    }
+
+    // Update the currentUser's document with these new scores
+    currentUser.compatibilityScores = updatedScores;
+    await currentUser.save();
+}
+
+async function calculateCompatibilityScoresForAll() {
+    const allUsers = await User.find({});
+    // console.log(allUsers);
+
+    for (const currentUser of allUsers) {
+        let updatedScores = [];
+
+        for (const otherUser of allUsers) {
+            if (currentUser.id === otherUser.id) continue; // Skip comparing the user with themselves
+
+            const score = calculateCompatibilityScore(currentUser, otherUser);
+            updatedScores.push({ user: otherUser._id, score });
+        }
+
+        // Update the currentUser's document with these new scores
+        currentUser.compatibilityScores = updatedScores;
+        await currentUser.save();
+    }
+}
