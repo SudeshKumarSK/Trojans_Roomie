@@ -10,5 +10,6 @@
   background-image: url("../../assets/tommy_full.jpeg");
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: 40% 50%;
+  background-attachment: fixed;
+  background-position: left;
 }
