@@ -25,6 +25,66 @@ async function exchangeCodeForTokens(code) {
 
 }
 
+async function fetchUserTopArtistsAndGenres(accessToken) {
+    try {
+        const response = await fetch('https://api.spotify.com/v1/me/top/artists?limit=10', {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        let genres = new Set(); // Use a Set to store genres without duplicates
+
+        const artists = data.items.map(artist => {
+            artist.genres.forEach(genre => genres.add(genre)); // Add genres to the set
+            return {
+                name: artist.name,
+                albumImageUrl: artist.images[0]?.url,
+            };
+        });
+
+        // Since genres is a simple array of strings, we just convert the set to an array
+        return {
+            artists: artists,
+            genres: Array.from(genres)
+        };
+
+    } catch (error) {
+        console.error('Failed to fetch user top artists and genres:', error);
+        throw error; // Propagate the error up to be handled in handleAuthCallback
+    }
+}
+
+
+async function fetchUserTopTracks(accessToken) {
+    try {
+        const response = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=10', {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching top tracks: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const tracks = data.items.map(track => {
+            return {
+                name: track.name,
+                albumImageUrl: track.album.images[0]?.url // Using optional chaining in case there's no image
+            };
+        });
+        return tracks;
+
+    } catch (error) {
+        console.error('Failed to fetch user top tracks:', error);
+        throw error; // Re-throw the error to be handled by the calling function
+    }
+}
+
+
 export async function handleAuthCallback(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
@@ -44,42 +104,48 @@ export async function handleAuthCallback(req, res, next) {
         const tokenData = await exchangeCodeForTokens(code);
         const userId = req.user.id;
 
-        setTimeout(async () => {
-            try {
-                const simulatedSpotifyData = {
-                    genres: ["Pop", "Rock", "Indie"],
-                    artists: ["Artist1", "Artist2", "Artist3"],
-                };
+        await User.findByIdAndUpdate(
+            userId,
+            {
+                $set: {
+                    isSpotifyConnected: true,
+                    spotifyAccessToken: tokenData.access_token,
+                    spotifyRefreshToken: tokenData.refresh_token,
+                    spotifyTokenExpiry: new Date(new Date().getTime() + tokenData.expires_in * 1000),
+                    spotifyGenres: [],
+                    spotifyArtists: [],
+                    spotifyTracks: []
+                },
+            },
+            { new: true }
+        );
 
-                const updatedUser = await User.findByIdAndUpdate(
-                    userId,
-                    {
-                        $set: {
-                            isSpotifyConnected: true,
-                            spotifyAccessToken: tokenData.access_token,
-                            spotifyRefreshToken: tokenData.refresh_token,
-                            spotifyTokenExpiry: new Date(new Date().getTime() + tokenData.expires_in * 1000),
-                            spotifyGenres: simulatedSpotifyData.genres,
-                            spotifyArtists: simulatedSpotifyData.artists
-                        },
-                    },
-                    { new: true }
-                );
+        // Fetch Spotify Data from Spotify API.
+        const artistGenreData = await fetchUserTopArtistsAndGenres(tokenData.access_token);
+        const tracks = await fetchUserTopTracks(tokenData.access_token);
 
-                const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
-                    spotifyGenres, spotifyArtists, ...userDetails } = updatedUser._doc;
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+                $set: {
+                    spotifyGenres: artistGenreData.genres,
+                    spotifyArtists: artistGenreData.artists,
+                    spotifyTracks: tracks
+                },
+            },
+            { new: true }
+        );
 
-                const responseData = {
-                    spotify_data: { spotifyGenres, spotifyArtists },
-                    user_data: userDetails
-                };
+        const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
+            spotifyGenres, spotifyArtists, ...userDetails } = updatedUser._doc;
 
-                res.status(200).json(responseData);
-            } catch (updateError) {
-                console.error(updateError);
-                next(errorHandler(500, 'Error updating user with Spotify data'));
-            }
-        }, 5000); // 5000 milliseconds (5 seconds) delay
+        const responseData = {
+            spotify_data: { spotifyGenres, spotifyArtists },
+            user_data: userDetails
+        };
+
+        res.status(200).json(responseData);
+
 
     } catch (error) {
         console.error(error);
@@ -105,7 +171,8 @@ export async function disconnectSpotify(req, res, next) {
                 spotifyRefreshToken: null,
                 spotifyTokenExpiry: null,
                 spotifyGenres: [],
-                spotifyArtists: []
+                spotifyArtists: [],
+                spotifyTracks: []
             },
         }, { new: true });
 
@@ -126,10 +193,9 @@ export async function disconnectSpotify(req, res, next) {
         const message = error.message || 'Internal Server Error';
         next(errorHandler(statusCode, message));
     }
-}
+};
+
+
 
 export async function refreshAccessToken(req, res, next) {
-}
-
-export async function fetchSpotifyData(req, res, next) {
-}
+};
