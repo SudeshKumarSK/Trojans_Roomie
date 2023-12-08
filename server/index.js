@@ -8,6 +8,11 @@ import authRoutes from "./routes/auth.routes.js";
 import spotifyRoutes from "./routes/spotify.routes.js";
 import listingsRoutes from "./routes/listings.routes.js";
 import cookieParser from "cookie-parser";
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
@@ -20,7 +25,7 @@ app.use(cookieParser());
 app.use(bodyParser.json({ limit: '30mb', extended: true }))
 app.use(bodyParser.urlencoded({ limit: '30mb', extended: true }))
 app.use(cors());
-
+app.use(express.static(path.join(__dirname, 'dist')));
 
 mongoose
     .connect(CONNECTION_URI)
@@ -55,6 +60,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/spotify", spotifyRoutes);
 app.use("/api/listings", listingsRoutes);
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -66,5 +75,3 @@ app.use((err, req, res, next) => {
     });
 });
 
-// trojanroomie@gmail.com 
-// Brandon6969#
