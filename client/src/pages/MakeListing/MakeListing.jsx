@@ -144,17 +144,17 @@ const MakeListing = () => {
     }));
   };
 
-  // Event handler for checkbox groups
   const handleCheckboxGroupChange = (event) => {
-    const { id, value } = event.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [id]: prevFormData[id].includes(value)
-        ? prevFormData[id].filter((item) => item !== value)
-        : [...prevFormData[id], value],
-    }));
+    const { value } = event.target;
+    setFormData(prevFormData => {
+      const updatedPets = prevFormData.preferredPets.includes(value)
+        ? prevFormData.preferredPets.filter(item => item !== value)
+        : [...prevFormData.preferredPets, value];
+  
+      return { ...prevFormData, preferredPets: updatedPets };
+    });
   };
-
+  
   return (
     <div>
       <div className="listing-container mt-10 mb-10 w-full md:max-w-xl mx-auto rounded-lg">
