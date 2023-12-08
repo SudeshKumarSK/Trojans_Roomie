@@ -373,6 +373,7 @@ const MakeListing = () => {
                       )}
                       onChange={handleCheckboxGroupChange}
                       name="preferredPets"
+                      id="preferredPets"
                       className="form-checkbox h-5 w-5 text-gray-600"
                     />
                     <span>{pet}</span>
