@@ -27,7 +27,6 @@ TabPanel.propTypes = {
 };
 
 const ListingsCard = ({ listing }) => {
-  console.log("ListingsCard listing prop:", listing.listingInfo);
 
   const [activeTab, setActiveTab] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false); // Track favorite status
@@ -65,7 +64,7 @@ const ListingsCard = ({ listing }) => {
           alt={`${listing.user.username}'s profile`}
           style={{ width: "50px", height: "50px", borderRadius: "50%" }}
         />
-        <h1 className="text-red-700 font-bold text-xl">{listing.user.username}</h1>
+        <h1 className="text-red-700 font-bold text-xl6775455780130">{listing.user.username}</h1>
         <div
           style={{
             fontSize: "24px",
