@@ -270,6 +270,9 @@ const MakeListing = () => {
               </div>
             </div>
             <div className="w-full mb-4">
+            <h2 className="text-2xl sm:text-3xl font-semibold mb-3 text-red-700">
+                Roomate Preferences
+              </h2>
               <label
                 htmlFor="foodPreference"
                 className="block text-lg font-bold mb-2"
@@ -294,9 +297,6 @@ const MakeListing = () => {
             </div>
             {/* Smoke Preference Dropdown */}
             <div className="w-full mb-4">
-              <h2 className="text-2xl sm:text-3xl font-semibold mb-3 text-red-700">
-                Roomate Preferences
-              </h2>
               <label
                 htmlFor="smokePreference"
                 className="block text-lg font-bold mb-2"
