@@ -1,0 +1,15 @@
+.listing-container {
+    background-color: rgb(0, 0, 0, 0.43);
+    backdrop-filter: blur(2px);
+    min-height: 100px;
+    padding: 20px;
+    color: white;
+  }
+  
+  .bg-apartment{
+    background-image: url("../../assets/Apartment.jpeg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: 10% 50%;
+  }
