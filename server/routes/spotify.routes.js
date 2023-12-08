@@ -8,6 +8,4 @@ router.post('/refresh', verifyToken, refreshAccessToken);
 router.get('/fetch/:id', verifyToken, fetchSpotifyData);
 router.post('/disconnect/:id', verifyToken, disconnectSpotify);
 
-
-
 export default router;                                                                         
