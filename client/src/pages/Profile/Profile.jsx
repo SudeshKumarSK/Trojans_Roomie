@@ -147,55 +147,6 @@ const Profile = () => {
       setIsUpdating(false);
     }
   };
-  const handleDisconnect = async () => {
-    setHasDisconnected(true);
-    dispatch(spotifyStart());
-    dispatch(updateUserStart());
-    try {
-      const response = await fetch(
-        `/api/spotify/disconnect/${currentUser._id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const data = await response.json();
-      console.log(data);
-
-      if (data.success === false) {
-        dispatch(
-          spotifyFailure({
-            message: data.message || "Something went wrong!",
-          })
-        );
-
-        dispatch(
-          updateUserFailure({
-            message: data.message || "Something went wrong!",
-          })
-        );
-        return;
-      }
-
-      const { spotify_data, user_data } = data;
-      dispatch(updateUserSuccess(user_data));
-      dispatch(spotifyDisconnect());
-    } catch (error) {
-      dispatch(
-        spotifyFailure({
-          message: error.message || "Something went wrong!",
-        })
-      );
-
-      dispatch(
-        updateUserFailure({
-          message: error.message || "Something went wrong!",
-        })
-      );
-    }
-  };
 
   const handleSignOut = async () => {
     try {
