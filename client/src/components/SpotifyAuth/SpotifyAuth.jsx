@@ -15,15 +15,13 @@ import {
 
 import "./SpotifyAuth.css";
 
-const SpotifyAuth = () => {
+const SpotifyAuth = ({ hasDisconnected, setHasDisconnected }) => {
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
   const isSpotifyConnected = currentUser?.isSpotifyConnected ? true : false;
   const { spotifyLoading, spotifyError, spotifyData } = useSelector(
     (state) => state.spotify
   );
-
-  const [hasDisconnected, setHasDisconnected] = useState(false);
 
   const handleConnect = () => {
     setHasDisconnected(false);
@@ -81,6 +79,37 @@ const SpotifyAuth = () => {
     }
   };
 
+  const fetchUser = async () => {
+    try {
+      if (isSpotifyConnected) {
+        const response = await fetch(`/api/spotify/fetch/${currentUser._id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+
+        console.log(data);
+        if (data.success === false) {
+          dispatch(
+            spotifyFailure({
+              message: data.message || "Something went wrong!",
+            })
+          );
+        }
+        dispatch(spotifySuccess(data));
+      }
+    } catch (error) {
+      dispatch(
+        spotifyFailure({
+          message: error.message || "Something went wrong!",
+        })
+      );
+    }
+  };
+
   const setSpotifyAccessToken = async () => {
     const code = new URLSearchParams(window.location.search).get("code");
     if (code) {
@@ -132,8 +161,10 @@ const SpotifyAuth = () => {
       }
     }
   };
+
   useEffect(() => {
     setSpotifyAccessToken();
+    fetchUser();
   }, [dispatch, currentUser?._id]);
 
   return (
