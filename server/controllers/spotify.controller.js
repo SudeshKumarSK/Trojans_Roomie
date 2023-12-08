@@ -204,6 +204,30 @@ export async function disconnectSpotify(req, res, next) {
 export async function refreshAccessToken(req, res, next) {
 };
 
+export async function fetchSpotifyData(req, res, next) {
+    try {
+
+        if (req.user.id !== req.params.id) {
+            return next(errorHandler(401, 'You can update only your account!'));
+        }
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+
+        const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
+            spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores, ...userDetails } = user._doc;
+
+        const spotify_data = {
+            spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores
+        };
+        res.status(200).json(spotify_data);
+
+    } catch (error) {
+        console.error(error);
+        const statusCode = error.statusCode || 500;
+        const message = error.message || 'Internal Server Error';
+        next(errorHandler(statusCode, message));
+    }
+};
 
 function calculateCompatibilityScore(currentUser, otherUser) {
     // If either user hasn't connected their Spotify account, return -1
