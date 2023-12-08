@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import spotifyRoutes from "./routes/spotify.routes.js";
+import listingsRoutes from "./routes/listings.routes.js";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
@@ -52,6 +53,7 @@ app.listen(PORT, () => {
 app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/spotify", spotifyRoutes);
+app.use("/api/listings", listingsRoutes);
 
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
