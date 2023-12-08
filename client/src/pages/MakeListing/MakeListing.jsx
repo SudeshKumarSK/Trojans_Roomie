@@ -16,6 +16,7 @@ const MakeListing = () => {
   const [image, setImage] = useState(undefined);
   const [imagePercent, setImagePercent] = useState(0);
   const [imageError, setImageError] = useState(false);
+  const [formError, setFormError] = useState(null);
   const [formData, setFormData] = useState({
     address: "",
     headline: "",
@@ -97,6 +98,9 @@ const MakeListing = () => {
 
       if (data.success === false) {
         console.log(data.message);
+        setFormError(data.message);
+        setUpdateSuccess(false);
+        setIsUpdating(false);
         return;
       }
 
@@ -125,8 +129,9 @@ const MakeListing = () => {
       // Show a success alert or modal
       alert("Listing has been created and updated successfully!");
     } catch (error) {
-      setUpdateSuccess(false);
       console.log(error.message);
+      setFormError(error.message);
+      setUpdateSuccess(false);
       setIsUpdating(false);
     }
   };
@@ -565,15 +570,15 @@ const MakeListing = () => {
             <button
               type="submit"
               className={`bg-slate-700 item-center text-white rounded-md mb-4 w-1/2 h-12 text-lg sm:text-xl hover:opacity-90 ${
-                isUpdating || loading ? "opacity-50 cursor-not-allowed" : ""
+                isUpdating ? "opacity-50 cursor-not-allowed" : ""
               }`}
-              disabled={isUpdating || loading}
+              disabled={isUpdating}
             >
-              {loading ? "Loading..." : "Make a Listing"}
+              {isUpdating ? "Updating..." : "Make a Listing"}
             </button>
           </form>
         </div>
-        <p className="text-red-700 mt-5">{error ? error : ""}</p>
+        <p className="text-red-700 mt-5">{formError ? formError : ""}</p>
         <p className="text-green-700 mt-5">
           {updateSuccess && "Listing Created Successfully!!"}
         </p>
