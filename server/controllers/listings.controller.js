@@ -1,6 +1,5 @@
 import User from "../models/user.models.js";
 import errorHandler from "../utils/error.js";
-import jwt from "jsonwebtoken";
 import dotenv from 'dotenv';
 
 
@@ -67,7 +66,7 @@ export async function getAllListings(req, res, next) {
             // Combine user's listings with the reference user's compatibility score for each listing
             const userListingData = user.listings.map(listing => {
                 // Extract the relevant information from the listing
-                const { buildingType, rent, moveInFee, utilityFee, isFurnished, apartmentImage, address, headline, description, cleanliness, overnightGuests, partyHabits, getUpTime, goToBed, smoker, foodPreference, smokePreference, preferredPets } = listing;
+                const { _id: listing_id, buildingType, rent, moveInFee, utilityFee, isFurnished, apartmentImage, address, headline, description, cleanliness, overnightGuests, partyHabits, getUpTime, goToBed, smoker, foodPreference, smokePreference, preferredPets } = listing;
 
                 // Combine into one apartment data object
                 const apartmentData = {
@@ -108,6 +107,7 @@ export async function getAllListings(req, res, next) {
 
                 // Return the combined listing data
                 return {
+                    listing_id,
                     user: {
                         id: user._id,
                         username: user.username,
