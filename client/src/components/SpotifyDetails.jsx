@@ -25,13 +25,20 @@ const SpotifyDetails = ({ spotifyData }) => {
 
   return (
     <Box sx={{ padding: 2 }}>
-      <Typography variant="h6" component="h3" gutterBottom>
-        Spotify Details
-      </Typography>
+      <Typography
+          variant="h4"
+          sx={{
+            color: "#333",
+            paddingBottom: 2,
+            borderBottom: "2px solid #ccc",
+          }}
+        >
+          Music Taste
+        </Typography>
 
       <Box sx={{ marginBottom: 2 }}>
         <Typography variant="subtitle1" component="strong" gutterBottom>
-          Genres:
+          Genres
         </Typography>
         <Stack
           direction="row"
@@ -44,7 +51,7 @@ const SpotifyDetails = ({ spotifyData }) => {
               key={index}
               label={genre}
               variant="outlined"
-              sx={{ marginBottom: 1, marginRight: 1 }} // Ensure proper spacing around each Chip
+              sx={{ marginBottom: 3, marginRight: 1 }} // Ensure proper spacing around each Chip
             />
           ))}
         </Stack>

@@ -65,7 +65,7 @@ const ListingsCard = ({ listing }) => {
           alt={`${listing.user.username}'s profile`}
           style={{ width: "50px", height: "50px", borderRadius: "50%" }}
         />
-        <h3>{listing.user.username}</h3>
+        <h1 className="text-red-700 font-bold text-xl">{listing.user.username}</h1>
         <div
           style={{
             fontSize: "24px",
