@@ -37,6 +37,7 @@ const MakeListing = () => {
   });
 
   const [isUpdating, setIsUpdating] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("bg-apartment");
@@ -79,8 +80,55 @@ const MakeListing = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
     console.log(formData);
+    setImageError(false);
+    setImagePercent(0);
+    e.preventDefault();
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`/api/listings/create/${currentUser._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+
+      if (data.success === false) {
+        console.log(data.message);
+        return;
+      }
+
+      setUpdateSuccess(true);
+      setIsUpdating(false);
+      setFormData({
+        address: "",
+        headline: "",
+        description: "",
+        cleanliness: "",
+        overnightGuests: "",
+        partyHabits: "",
+        getUpTime: "",
+        goToBed: "",
+        smoker: "",
+        foodPreference: "",
+        smokePreference: "",
+        preferredPets: [],
+        buildingType: "",
+        rent: 0,
+        moveInFee: 0,
+        utilityFee: 0,
+        isFurnished: false,
+      });
+
+      // Show a success alert or modal
+      alert("Listing has been created and updated successfully!");
+    } catch (error) {
+      setUpdateSuccess(false);
+      console.log(error.message);
+      setIsUpdating(false);
+    }
   };
 
   const handleChange = (event) => {
@@ -136,6 +184,7 @@ const MakeListing = () => {
                 onChange={handleChange}
                 className="bg-slate-100 text-slate-900 shadow appearance-none border rounded w-full py-3 px-4 leading-tight focus:outline-none focus:shadow-outline text-xl"
                 maxLength="35"
+                autoComplete="off"
                 required
               />
               <p className="text-gray-600 text-xs italic">
@@ -156,6 +205,7 @@ const MakeListing = () => {
                 className="shadow appearance-none border rounded w-full py-3 px-4 text-slate-900 leading-tight focus:outline-none focus:shadow-outline"
                 maxLength="2000"
                 rows="5"
+                autoComplete="off"
                 required
               ></textarea>
               <p className="text-gray-600 text-xs italic absolute right-3 bottom-3">
@@ -215,7 +265,7 @@ const MakeListing = () => {
               {/* Party Habits */}
               <div className="w-full mb-4">
                 <label
-                  htmlFor="overnightGuests"
+                  htmlFor="partyHabits"
                   className="block text-lg font-bold mb-2"
                 >
                   Party Habits
@@ -373,7 +423,7 @@ const MakeListing = () => {
                       )}
                       onChange={handleCheckboxGroupChange}
                       name="preferredPets"
-                      id="preferredPets"
+                      id={`preferredPets-${pet.toLowerCase()}`} // Unique ID for each checkbox
                       className="form-checkbox h-5 w-5 text-gray-600"
                     />
                     <span>{pet}</span>
@@ -446,7 +496,7 @@ const MakeListing = () => {
 
               <div className="mb-4">
                 <label
-                  htmlFor="UtilityFee"
+                  htmlFor="utilityFee"
                   className="block text-lg font-bold mb-2"
                 >
                   Utility Fee
@@ -482,7 +532,7 @@ const MakeListing = () => {
 
               <div className="mb-4">
                 <label
-                  htmlFor="imageUpload"
+                  htmlFor="apartmentImage"
                   className="block text-lg font-bold mb-2"
                 >
                   Upload Apartment Image
@@ -523,6 +573,10 @@ const MakeListing = () => {
             </button>
           </form>
         </div>
+        <p className="text-red-700 mt-5">{error ? error : ""}</p>
+        <p className="text-green-700 mt-5">
+          {updateSuccess && "Listing Created Successfully!!"}
+        </p>
       </div>
     </div>
   );
