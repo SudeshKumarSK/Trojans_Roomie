@@ -1,7 +1,5 @@
 import mongoose from 'mongoose';
-
-// No need for separate genreSchema since it's only a string
-// No need for separate artistSchema and trackSchema since they are simple objects and not used elsewhere
+import Listing from './ListingSchema.js';
 
 const userSchema = new mongoose.Schema({
     username: {
