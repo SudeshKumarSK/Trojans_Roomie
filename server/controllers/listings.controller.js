@@ -35,13 +35,10 @@ export async function createListing(req, res, next) {
 
 export async function getAllListings(req, res, next) {
     try {
-
+        // Check if the user is authorized to view the listings
         if (req.user.id !== req.params.id) {
             return next(errorHandler(401, 'You can update only your account!'));
         }
-        
-        // Assuming 'req.user.id' holds the id of the user whose compatibility you want to check against
-        const referenceUserId = req.user.id;
 
         // Fetch all users with their listings and populate the listings field
         const usersWithListings = await User.find({})
@@ -52,8 +49,8 @@ export async function getAllListings(req, res, next) {
         let allListings = [];
 
         // Fetch the reference user's compatibility scores
-        const referenceUser = await User.findById(referenceUserId)
-            .select('compatibilityScores')
+        const referenceUser = await User.findById(req.user.id)
+            .select('compatibilityScores spotifyArtists spotifyTracks spotifyGenres')
             .exec();
 
         if (!referenceUser) {
@@ -102,6 +99,13 @@ export async function getAllListings(req, res, next) {
                 // Find the compatibility score for this listing with respect to the reference user
                 const compatibilityScore = compatibilityScoresMap.get(user._id.toString()) || 0;
 
+                // Prepare the Spotify data object
+                const spotifyData = {
+                    genres: user.spotifyGenres,
+                    artists: user.spotifyArtists,
+                    tracks: user.spotifyTracks,
+                };
+
                 // Return the combined listing data
                 return {
                     user: {
@@ -112,6 +116,7 @@ export async function getAllListings(req, res, next) {
                     apartmentData,
                     listingInfo,
                     compatibilityScore,
+                    spotifyData, // Add the Spotify data here
                 };
             });
 
@@ -129,6 +134,7 @@ export async function getAllListings(req, res, next) {
         console.error(error);
         const statusCode = error.statusCode || 500;
         const message = error.message || 'Internal Server Error';
+        // Implement your errorHandler function or use a standard Express error handling mechanism
         next(errorHandler(statusCode, message));
     }
 }
