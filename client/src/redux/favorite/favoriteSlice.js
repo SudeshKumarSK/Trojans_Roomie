@@ -5,21 +5,23 @@ const initialState = {
 };
 
 const favoriteSlice = createSlice({
-    name: "favourites",
+    name: "favorites",
     initialState,
     reducers: {
         // Action to add a listing to favorites
         addFavorite: (state, action) => {
+            const listingToAdd = action.payload;
             // Check if the listing is not already in favorites
-            if (!state.favoriteListings.some((listing) => listing.id === action.payload.id)) {
-                state.favoriteListings.push(action.payload);
+            if (!state.favoriteListings.some(listing => listing.listing_id === listingToAdd.listing_id)) {
+                state.favoriteListings.push(listingToAdd);
             }
         },
 
         // Action to remove a listing from favorites
         removeFavorite: (state, action) => {
+            const listingIdToRemove = action.payload.listing_id;
             state.favoriteListings = state.favoriteListings.filter(
-                (listing) => listing.id !== action.payload.id
+                listing => listing.listing_id !== listingIdToRemove
             );
         },
     },

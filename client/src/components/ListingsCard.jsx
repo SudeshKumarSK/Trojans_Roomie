@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import PropTypes from "prop-types";
 import { AppBar, Tabs, Tab, Box, Typography } from "@mui/material";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import UserInfo from "./UserInfo";
 import SpotifyDetails from "./SpotifyDetails";
 import ApartmentDetails from "./ApartmentDetails";
+import { addFavorite, removeFavorite } from "../redux/favorite/favoriteSlice";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -27,16 +30,24 @@ TabPanel.propTypes = {
 };
 
 const ListingsCard = ({ listing }) => {
-
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false); // Track favorite status
+  const compatibilityScore = listing.compatibilityScore.toFixed(2);
+  const favoriteListings = useSelector(
+    (state) => state.favorite.favoriteListings
+  );
 
   const handleChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
   const handleFavorite = () => {
-    // Toggle favorite status
+    if (isFavorite) {
+      dispatch(removeFavorite(listing));
+    } else {
+      dispatch(addFavorite(listing));
+    }
     setIsFavorite(!isFavorite);
   };
 
@@ -48,6 +59,7 @@ const ListingsCard = ({ listing }) => {
         padding: "10px",
         marginBottom: "20px",
         boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+        position: "relative",
       }}
     >
       <div
@@ -64,7 +76,9 @@ const ListingsCard = ({ listing }) => {
           alt={`${listing.user.username}'s profile`}
           style={{ width: "50px", height: "50px", borderRadius: "50%" }}
         />
-        <h1 className="text-red-700 font-bold text-xl6775455780130">{listing.user.username}</h1>
+        <h1 className="text-red-700 font-bold text-xl6775455780130">
+          {listing.user.username}
+        </h1>
         <div
           style={{
             fontSize: "24px",
@@ -75,6 +89,20 @@ const ListingsCard = ({ listing }) => {
         >
           {isFavorite ? <AiFillHeart /> : <AiOutlineHeart />}
         </div>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          bottom: "10px",
+          right: "10px",
+          background: "rgba(0, 0, 0, 0.7)",
+          color: "white",
+          padding: "5px 10px",
+          borderRadius: "4px",
+        }}
+      >
+        Compatibility: {compatibilityScore}%
       </div>
 
       <AppBar position="relative">
