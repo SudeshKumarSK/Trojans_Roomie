@@ -1,15 +1,21 @@
-import {configureStore, combineReducers} from "@reduxjs/toolkit";
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import userReducer from "./user/userSlice";
-import {persistReducer, persistStore} from "redux-persist";
+import spotifyReducer from "./spotify/spotifySlice"; 
+import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 
 const persistConfig = {
     key: "root",
     version: 1,
     storage,
-}
+};
 
-const rootReducer = combineReducers({user: userReducer});
+// Include the spotify reducer in the combined reducers
+const rootReducer = combineReducers({
+    user: userReducer,
+    spotify: spotifyReducer,
+});
+
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
@@ -17,6 +23,6 @@ export const store = configureStore({
     middleware: (getDefaultMiddleware) => getDefaultMiddleware({
         serializableCheck: false,
     }),
-})
+});
 
 export const persistor = persistStore(store);

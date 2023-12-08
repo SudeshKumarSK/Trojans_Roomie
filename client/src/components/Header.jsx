@@ -25,17 +25,18 @@ const Header = () => {
         </div>
 
         <ul className="flex sm:flex-row gap-4 items-center mt-3 md:mt-0">
-          <Link to="/">
-            <li className="font-bold text-orange-700  text-base sm:text-lg">
-              Home
-            </li>
-          </Link>
           <Link to="/about">
-            <li className="font-bold text-orange-700   text-base sm:text-lg">
+            <li className="font-bold text-orange-700  text-base sm:text-lg">
               About
             </li>
           </Link>
 
+          <Link to="/make-listing">
+            <li className="font-bold text-orange-700  text-base sm:text-lg">
+              Make Listing
+            </li>
+          </Link>
+        
           <Link to="/profile">
             {currentUser ? (
               <img

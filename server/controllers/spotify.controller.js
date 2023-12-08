@@ -25,6 +25,66 @@ async function exchangeCodeForTokens(code) {
 
 }
 
+async function fetchUserTopArtistsAndGenres(accessToken) {
+    try {
+        const response = await fetch('https://api.spotify.com/v1/me/top/artists?limit=10', {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching top Artists: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        let genres = new Set(); // Use a Set to store genres without duplicates
+
+        const artists = data.items.map(artist => {
+            artist.genres.forEach(genre => genres.add(genre)); // Add genres to the set
+            return {
+                name: artist.name,
+                albumImageUrl: artist.images[0]?.url,
+            };
+        });
+
+        // Since genres is a simple array of strings, we just convert the set to an array
+        return {
+            artists: artists,
+            genres: Array.from(genres)
+        };
+
+    } catch (error) {
+        console.error('Failed to fetch user top artists and genres:', error);
+        throw error; // Propagate the error up to be handled in handleAuthCallback
+    }
+}
+
+
+async function fetchUserTopTracks(accessToken) {
+    try {
+        const response = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=10', {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching top tracks: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const tracks = data.items.map(track => {
+            return {
+                name: track.name,
+                albumImageUrl: track.album.images[0]?.url // Using optional chaining in case there's no image
+            };
+        });
+        return tracks;
+
+    } catch (error) {
+        console.error('Failed to fetch user top tracks:', error);
+        throw error; // Re-throw the error to be handled by the calling function
+    }
+}
+
+
 export async function handleAuthCallback(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
@@ -44,22 +104,53 @@ export async function handleAuthCallback(req, res, next) {
         const tokenData = await exchangeCodeForTokens(code);
         const userId = req.user.id;
 
-        // Save tokens to MongoDB
-        const updatedUser = await User.findByIdAndUpdate(
+        await User.findByIdAndUpdate(
             userId,
             {
                 $set: {
+                    isSpotifyConnected: true,
                     spotifyAccessToken: tokenData.access_token,
                     spotifyRefreshToken: tokenData.refresh_token,
-                    spotifyTokenExpiry: new Date(new Date().getTime() + tokenData.expires_in * 1000)
+                    spotifyTokenExpiry: new Date(new Date().getTime() + tokenData.expires_in * 1000),
+                    spotifyGenres: [],
+                    spotifyArtists: [],
+                    spotifyTracks: []
                 },
             },
             { new: true }
         );
-        
-        // Send a JSON response
-        const { password, ...rest } = updatedUser._doc;
-        res.status(200).json(rest);
+
+        // Fetch Spotify Data from Spotify API.
+        const artistGenreData = await fetchUserTopArtistsAndGenres(tokenData.access_token);
+        const tracks = await fetchUserTopTracks(tokenData.access_token);
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+                $set: {
+                    spotifyGenres: artistGenreData.genres,
+                    spotifyArtists: artistGenreData.artists,
+                    spotifyTracks: tracks
+                },
+            },
+            { new: true }
+        );
+
+        const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
+            spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores, ...userDetails } = updatedUser._doc;
+
+        const responseData = {
+            spotify_data: { spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores },
+            user_data: userDetails
+        };
+
+
+        // Calculate and update compatibility scores
+        await calculateCompatibilityScoresForAll(userId);
+
+        res.status(200).json(responseData);
+
+
     } catch (error) {
         console.error(error);
         const statusCode = error.statusCode || 500;
@@ -69,120 +160,151 @@ export async function handleAuthCallback(req, res, next) {
 }
 
 
-
-
-async function refreshSpotifyToken(refreshToken) {
-    const response = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': 'Basic ' + Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64')
-        },
-        body: new URLSearchParams({
-            grant_type: 'refresh_token',
-            refresh_token: refreshToken
-        })
-    });
-
-    const data = await response.json();
-    return data; // This will contain access_token and expires_in
-}
-
-export async function refreshAccessToken(req, res) {
+export async function disconnectSpotify(req, res, next) {
     try {
-        const userId = req.user._id; // Get user's ID from session or JWT
+
+        if (req.user.id !== req.params.id) {
+            return next(errorHandler(401, 'You can update only your account!'));
+        }
+        const userId = req.user.id;
+
+        const updatedUser = await User.findByIdAndUpdate(userId, {
+            $set: {
+                isSpotifyConnected: false,
+                spotifyAccessToken: null,
+                spotifyRefreshToken: null,
+                spotifyTokenExpiry: null,
+                spotifyGenres: [],
+                spotifyArtists: [],
+                spotifyTracks: []
+            },
+        }, { new: true });
+
+
+        const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
+            spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores, ...userDetails } = updatedUser._doc;
+
+        const responseData = {
+            spotify_data: { spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores },
+            user_data: userDetails
+        };
+        res.status(200).json(responseData);
+
+
+    } catch (error) {
+        console.error(error);
+        const statusCode = error.statusCode || 500;
+        const message = error.message || 'Internal Server Error';
+        next(errorHandler(statusCode, message));
+    }
+};
+
+
+
+export async function refreshAccessToken(req, res, next) {
+};
+
+export async function fetchSpotifyData(req, res, next) {
+    try {
+
+        if (req.user.id !== req.params.id) {
+            return next(errorHandler(401, 'You can update only your account!'));
+        }
+        const userId = req.user.id;
         const user = await User.findById(userId);
 
-        const newTokenData = await refreshSpotifyToken(user.spotifyRefreshToken); // Implement this
-        await User.findByIdAndUpdate(userId, {
-            spotifyAccessToken: newTokenData.access_token,
-            spotifyTokenExpiry: new Date(new Date().getTime() + newTokenData.expires_in * 1000)
-        });
+        const { password, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry,
+            spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores, ...userDetails } = user._doc;
 
-        res.status(200).json({
-            message: 'Spotify access token refreshed successfully',
-            accessToken: newTokenData.access_token, // Send new access token
-            expiresIn: newTokenData.expires_in // Send token expiry time
-        });
+        const spotify_data = {
+            spotifyGenres, spotifyArtists, spotifyTracks, compatibilityScores
+        };
+        res.status(200).json(spotify_data);
+
     } catch (error) {
         console.error(error);
         const statusCode = error.statusCode || 500;
         const message = error.message || 'Internal Server Error';
         next(errorHandler(statusCode, message));
     }
-}
+};
 
-export async function disconnectSpotify(req, res) {
-    try {
-        const userId = req.user._id;
-        await User.findByIdAndUpdate(userId, {
-            spotifyAccessToken: null,
-            spotifyRefreshToken: null,
-            spotifyTokenExpiry: null,
-            spotifyProfileData: {}
-        });
-
-        res.send('Spotify account disconnected');
-    } catch (error) {
-        console.error(error);
-        const statusCode = error.statusCode || 500;
-        const message = error.message || 'Internal Server Error';
-        next(errorHandler(statusCode, message));
+function calculateCompatibilityScore(currentUser, otherUser) {
+    // If either user hasn't connected their Spotify account, return -1
+    if (!currentUser.isSpotifyConnected || !otherUser.isSpotifyConnected) {
+        return -1;
     }
+
+    let score = 0;
+
+    // Calculate a score based on the intersection of their top genres
+    const commonGenres = currentUser.spotifyGenres.filter(genre =>
+        otherUser.spotifyGenres.includes(genre)
+    );
+    score += commonGenres.length; // 1 point for each common genre
+
+    // Calculate a score based on the intersection of their top artists
+    const commonArtists = currentUser.spotifyArtists.filter(artist =>
+        otherUser.spotifyArtists.some(a => a.name === artist.name)
+    );
+    score += commonArtists.length * 3; // 3 points for each common artist (increased weight)
+
+    // Calculate a score based on the intersection of their top tracks
+    const commonTracks = currentUser.spotifyTracks.filter(track =>
+        otherUser.spotifyTracks.some(t => t.name === track.name)
+    );
+    score += commonTracks.length * 5; // 5 points for each common track (increased weight)
+
+    // Normalize the score to a scale of 0-100 (if needed)
+    const maxPossibleScore = currentUser.spotifyGenres.length +
+        (currentUser.spotifyArtists.length * 3) +
+        (currentUser.spotifyTracks.length * 5);
+
+    if (maxPossibleScore === 0) {
+        return 0; // Or another appropriate value when no comparison data is available
+    }
+    const normalizedScore = (score / maxPossibleScore) * 100;
+
+    return normalizedScore;
 }
 
 
+async function calculateAndUpdateScores(userId) {
+    const currentUser = await User.findById(userId);
 
-async function fetchUserArtists(accessToken) {
-    const response = await fetch('https://api.spotify.com/v1/me/top/artists', {
-        headers: {
-            'Authorization': `Bearer ${accessToken}`
+    // Fetch other users to calculate scores with
+    const otherUsers = await User.find({ _id: { $ne: userId } });
+
+    // An array to hold the updated scores
+    let updatedScores = [];
+
+    // For each other user, calculate the score and add it to the updatedScores array
+    for (const otherUser of otherUsers) {
+        const score = calculateCompatibilityScore(currentUser, otherUser);
+        updatedScores.push({ user: otherUser._id, score });
+    }
+
+    // Update the currentUser's document with these new scores
+    currentUser.compatibilityScores = updatedScores;
+    await currentUser.save();
+}
+
+async function calculateCompatibilityScoresForAll() {
+    const allUsers = await User.find({});
+    // console.log(allUsers);
+
+    for (const currentUser of allUsers) {
+        let updatedScores = [];
+
+        for (const otherUser of allUsers) {
+            if (currentUser.id === otherUser.id) continue; // Skip comparing the user with themselves
+
+            const score = calculateCompatibilityScore(currentUser, otherUser);
+            updatedScores.push({ user: otherUser._id, score });
         }
-    });
 
-    const data = await response.json();
-    return data.items.map(artist => artist.name); // Returns an array of artist names
-}
-
-// Spotify doesn't provide a direct endpoint for user's favorite genres.
-// You would need to fetch top artists or tracks and extract genres from them.
-// Below is a simplified example of fetching genres based on top artists.
-async function fetchUserGenres(accessToken) {
-    const artistsResponse = await fetch('https://api.spotify.com/v1/me/top/artists', {
-        headers: {
-            'Authorization': `Bearer ${accessToken}`
-        }
-    });
-
-    const artistsData = await artistsResponse.json();
-    let genres = new Set(); // Use a set to avoid duplicates
-
-    artistsData.items.forEach(artist => {
-        artist.genres.forEach(genre => genres.add(genre));
-    });
-
-    return Array.from(genres); // Converts set to array
-}
-
-export async function fetchSpotifyData(req, res) {
-    try {
-        const userId = req.user._id;
-        const user = await User.findById(userId);
-        const accessToken = user.spotifyAccessToken;
-
-        const genres = await fetchUserGenres(accessToken); // Implement this
-        const artists = await fetchUserArtists(accessToken); // Implement this
-
-        await User.findByIdAndUpdate(userId, {
-            'spotifyProfileData.genres': genres,
-            'spotifyProfileData.artists': artists
-        });
-
-        res.send('Spotify data updated');
-    } catch (error) {
-        console.error(error);
-        const statusCode = error.statusCode || 500;
-        const message = error.message || 'Internal Server Error';
-        next(errorHandler(statusCode, message));
+        // Update the currentUser's document with these new scores
+        currentUser.compatibilityScores = updatedScores;
+        await currentUser.save();
     }
 }

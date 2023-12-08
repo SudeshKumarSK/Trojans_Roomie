@@ -16,7 +16,15 @@ import {
   deleteUserSuccess,
   deleteUserFailure,
   signOut,
+  signOutFailure,
 } from "../../redux/user/userSlice";
+
+import {
+  spotifyStart,
+  spotifySuccess,
+  spotifyFailure,
+  spotifyDisconnect,
+} from "../../redux/spotify/spotifySlice";
 
 import SpotifyAuth from "../../components/SpotifyAuth";
 import spotifyIcon from "../../assets/spotify_final.png";
@@ -31,6 +39,8 @@ const Profile = () => {
   const [imageError, setImageError] = useState(false);
   const [formData, setFormData] = useState({});
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [hasDisconnected, setHasDisconnected] = useState(false);
 
   useEffect(() => {
     if (image) {
@@ -45,6 +55,7 @@ const Profile = () => {
     };
   }, []);
   const handleFileUpload = async (image) => {
+    setIsUpdating(true);
     const storage = getStorage(app);
     const fileName = new Date().getTime() + image.name;
     const storageRef = ref(storage, fileName);
@@ -58,9 +69,11 @@ const Profile = () => {
       },
       (error) => {
         setImageError(true);
+        setIsUpdating(false);
       },
       () => {
         setImageError(false);
+        setIsUpdating(false);
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           setFormData({ ...formData, profilePicture: downloadURL });
         });
@@ -87,6 +100,7 @@ const Profile = () => {
         );
         return;
       }
+      dispatch(spotifyDisconnect());
       dispatch(deleteUserSuccess(data));
     } catch (error) {
       dispatch(
@@ -102,6 +116,7 @@ const Profile = () => {
     setImageError(false);
     setImagePercent(0);
     e.preventDefault();
+    setIsUpdating(true);
     try {
       dispatch(updateUserStart());
       const res = await fetch(`/api/user/update/${currentUser._id}`, {
@@ -123,26 +138,44 @@ const Profile = () => {
       }
       dispatch(updateUserSuccess(data));
       setUpdateSuccess(true);
+      setIsUpdating(false);
     } catch (error) {
       setUpdateSuccess(false);
       dispatch(
         updateUserFailure({ message: error.message || "Something went wrong!" })
       );
+      setIsUpdating(false);
     }
   };
 
   const handleSignOut = async () => {
     try {
-      await fetch("/api/auth/signout");
+      dispatch(spotifyDisconnect());
+      const response = await fetch("/api/auth/signout");
+      const data = await response.json();
+
+      if (data.success === false) {
+        dispatch(
+          signOutFailure({
+            message: error.message || "Something went wrong!",
+          })
+        );
+
+        return;
+      }
+
       dispatch(signOut());
     } catch (error) {
       console.log(error);
+      dispatch(
+        signOutFailure({ message: error.message || "Something went wrong!" })
+      );
     }
   };
 
   return (
     <div>
-      <div className="account-container mt-20 mb-10 w-3/4 md:max-w-xl mx-auto rounded-lg">
+      <div className="account-container mt-10 mb-10 w-3/4 md:max-w-xl mx-auto rounded-lg">
         <div className="flex flex-col items-center justify-center p-2">
           <h1 className="font-bold text-slate-100 text-2xl sm:text-3xl mb-4">
             Account Settings
@@ -216,9 +249,12 @@ const Profile = () => {
 
             <button
               type="submit"
-              className="bg-slate-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl uppercase hover:opacity-90 disabled:opacity-60"
+              className={`bg-slate-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl uppercase hover:opacity-90 ${
+                isUpdating || loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={isUpdating || loading}
             >
-              {loading ? "Loading ..." : "Update"}
+              {loading ? "Loading..." : "Update"}
             </button>
           </form>
         </div>
@@ -239,7 +275,7 @@ const Profile = () => {
         </p>
       </div>
 
-      <div className="account-container mt-20 mb-10 w-3/4 md:max-w-xl mx-auto rounded-lg">
+      <div className="account-container mb-20 w-3/4 md:max-w-xl mx-auto rounded-lg">
         <div className="flex flex-col items-center justify-center p-2">
           <div className="flex justify-start gap-4 mb-4">
             <h1 className="font-bold text-slate-100 text-2xl sm:text-3xl mb-4">
@@ -252,12 +288,15 @@ const Profile = () => {
             />
           </div>
           <p className="text-md font-semibold text-center">
-            Authorize to connect your Spotify Account with Trojan Roomie to experience Music-Based
-            Roommate Matching{" "}
+            Authorize to connect your Spotify Account with Trojan Roomie to
+            experience Music-Based Roommate Matching{" "}
           </p>
           <p className="mb-4 text-sm text-red-700">*Terms & Conditions Apply</p>
 
-          <SpotifyAuth />
+          <SpotifyAuth
+            hasDisconnected={hasDisconnected}
+            setHasDisconnected={setHasDisconnected}
+          />
         </div>
       </div>
     </div>

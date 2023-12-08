@@ -18,6 +18,8 @@ const SignIn = () => {
   }, []);
   const [formData, setFormData] = useState({});
   const { loading, error } = useSelector((state) => state.user);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -27,6 +29,7 @@ const SignIn = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsAuthenticating(true); // Start of authentication
     dispatch(signInStart());
     try {
       const res = await fetch("/api/auth/signin", {
@@ -40,14 +43,18 @@ const SignIn = () => {
       console.log(data);
 
       if (data.success === false) {
+        setIsAuthenticating(false);
         dispatch(
           signInFailure({ message: data.message || "Something went wrong!" })
         );
         return;
       }
+
       dispatch(signInSuccess(data));
       navigate("/");
+      setIsAuthenticating(false); // Reset on success or failure
     } catch (error) {
+      setIsAuthenticating(false); // Reset on success or failure
       console.error("Error during the API call", error);
       dispatch(
         signInFailure({
@@ -62,7 +69,7 @@ const SignIn = () => {
       <div className="signin-container my-20 w-3/4 md:max-w-xl mx-auto rounded-lg">
         <div className="flex items-center justify-center ">
           <h1 className="font-bold text-slate-200 p-2 text-2xl sm:text-3xl">
-            Log In 
+            Log In
           </h1>
         </div>
 
@@ -91,11 +98,21 @@ const SignIn = () => {
 
             <button
               type="submit"
-              className="bg-slate-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl uppercase hover:opacity-90 disabled:opacity-60"
+              className={`bg-slate-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl uppercase hover:opacity-90 ${
+                isAuthenticating || loading
+                  ? "disabled:opacity-60 cursor-not-allowed"
+                  : ""
+              }`}
+              disabled={isAuthenticating || loading}
             >
               {loading ? "Loading ..." : "Sign In"}
             </button>
-            <OAuth authType="signin" />
+
+            <OAuth
+              authType="signin"
+              isAuthenticating={isAuthenticating}
+              setIsAuthenticating={setIsAuthenticating}
+            />
           </form>
 
           <div className="flex flex-row gap-2 text-lg ">

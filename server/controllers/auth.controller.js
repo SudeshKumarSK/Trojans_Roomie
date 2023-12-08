@@ -57,7 +57,7 @@ export const signin = async (req, res, next) => {
         const validPassword = bcryptjs.compareSync(password, validUser.password);
         if (!validPassword) return next(errorHandler(401, "Invalid Credentials!"));
 
-        const { password: hashedPassword, ...rest } = validUser._doc;
+        const { password: hashedPassword, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry, ...rest } = validUser._doc;
         const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
         const expiryDate = new Date(Date.now() + 3600000);
         res.cookie('access_token', token, { httpOnly: true, expires: expiryDate }).status(200).json(rest);
@@ -86,7 +86,7 @@ export const google = async (req, res, next) => {
         // If user is already present in our Database
         if (user) {
             const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-            const { password: hashedPassword, ...rest } = user._doc;
+            const { password: hashedPassword, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry, ...rest } = user._doc;
             const expiryDate = new Date(Date.now() + 3600000); // 1 hour
             res
                 .cookie('access_token', token, {
@@ -115,7 +115,7 @@ export const google = async (req, res, next) => {
             await newUser.save();
 
             const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
-            const { password: hashedPassword2, ...rest } = newUser._doc;
+            const { password: hashedPassword2, spotifyAccessToken, spotifyRefreshToken, spotifyTokenExpiry, ...rest } = newUser._doc;
             const expiryDate = new Date(Date.now() + 3600000); // 1 hour
             res
                 .cookie('access_token', token, {
@@ -141,7 +141,7 @@ export const google = async (req, res, next) => {
     }
 };
 
-export const signOut = (req, res) => {
+export const signOut = (req, res, next) => {
     try {
         res.clearCookie("access_token").status(200).json("Succesfully logged out!")
     } catch (error) {

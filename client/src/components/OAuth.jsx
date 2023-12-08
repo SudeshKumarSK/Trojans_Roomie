@@ -13,11 +13,12 @@ import {
 } from "../redux/user/userSlice";
 import { useNavigate } from "react-router-dom";
 
-const OAuth = ({ authType }) => {
+const OAuth = ({ authType, isAuthenticating, setIsAuthenticating }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const handleGoogleClick = async () => {
     try {
+      setIsAuthenticating(true);
       const provider = new GoogleAuthProvider();
       // provider.setCustomParameters({
       //   hd: "usc.edu",
@@ -54,6 +55,7 @@ const OAuth = ({ authType }) => {
       const data = await oauthResponse.json();
 
       if (data.success === false) {
+        setIsAuthenticating(false);
         if (authType === "signup") {
           dispatch(
             signUpFailure({ message: data.message || "Something went wrong!" })
@@ -65,10 +67,11 @@ const OAuth = ({ authType }) => {
         }
         return;
       }
-
+      setIsAuthenticating(false);
       dispatch(signInSuccess(data));
       navigate("/");
     } catch (error) {
+      setIsAuthenticating(false);
       console.error("Error during Google OAuth", error);
       let errorMessage = "";
 
@@ -84,7 +87,7 @@ const OAuth = ({ authType }) => {
         default:
           errorMessage = `Error during Google OAuth: ${error.message}`;
       }
-      
+
       if (authType === "signup") {
         dispatch(
           signUpFailure({
@@ -103,8 +106,11 @@ const OAuth = ({ authType }) => {
   return (
     <button
       type="button"
-      className="bg-red-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl hover:opacity-80 disabled:opacity-50"
+      className={`bg-red-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl hover:opacity-80 ${
+        isAuthenticating ? "disabled:opacity-50 cursor-not-allowed" : ""
+      }`}
       onClick={handleGoogleClick}
+      disabled={isAuthenticating}
     >
       Continue with Google
     </button>

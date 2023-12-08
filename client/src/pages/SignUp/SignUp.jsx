@@ -18,6 +18,8 @@ const SignUp = () => {
   }, []);
   const [formData, setFormData] = useState({});
   const { loading, error } = useSelector((state) => state.user);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -27,6 +29,7 @@ const SignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsAuthenticating(true); // Start of authentication
     dispatch(signUpStart());
     try {
       const res = await fetch("/api/auth/signup", {
@@ -39,12 +42,15 @@ const SignUp = () => {
       const data = await res.json();
 
       if (data.success === false) {
+        setIsAuthenticating(false);
         dispatch(signUpFailure());
         return;
       }
       dispatch(signUpSuccess());
       navigate("/sign-in");
+      setIsAuthenticating(false);
     } catch (error) {
+      setIsAuthenticating(false);
       console.error("Error during the API call", error);
       dispatch(
         signUpFailure({
@@ -97,11 +103,21 @@ const SignUp = () => {
 
             <button
               type="submit"
-              className="bg-slate-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl uppercase hover:opacity-90 disabled:opacity-60"
+              className={`bg-slate-700 text-white rounded-md mb-4 w-1/2 h-10 text-lg sm:text-xl uppercase hover:opacity-90 ${
+                isAuthenticating || loading
+                  ? "disabled:opacity-60 cursor-not-allowed"
+                  : ""
+              }`}
+              disabled={isAuthenticating || loading}
             >
-              {loading ? "Loading..." : "Sign Up"}
+              {loading ? "Loading ..." : "Sign Up"}
             </button>
-            <OAuth authType="signup" />
+
+            <OAuth
+              authType="signup"
+              isAuthenticating={isAuthenticating}
+              setIsAuthenticating={setIsAuthenticating}
+            />
           </form>
 
           <div className="flex flex-row gap-2 text-lg ">
