@@ -83,6 +83,11 @@ const listingSchema = new mongoose.Schema({
         required: true,
         default: false, // Default to false if not provided
     },
+    apartmentImage: {
+        type: String,
+        default: 'https://img.freepik.com/free-photo/man-watching-news-office_23-2149726070.jpg?w=740&t=st=1702025985~exp=1702026585~hmac=afec2d39205593fb82659afb557ba444f19b748ae7519ef779a159426ad4f600',
+    },
+
     
 }, { timestamps: true });
 

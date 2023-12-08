@@ -1,13 +1,18 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRef, useState, useEffect } from "react";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
+import { app } from "../../firebase";
 import "./MakeListing.css";
 
 const MakeListing = () => {
   const dispatch = useDispatch();
   const { currentUser, loading, error } = useSelector((state) => state.user);
-  const fileRef = useRef(null);
   const [image, setImage] = useState(undefined);
   const [imagePercent, setImagePercent] = useState(0);
   const [imageError, setImageError] = useState(false);
@@ -30,9 +35,8 @@ const MakeListing = () => {
     utilityFee: 0,
     isFurnished: false,
   });
-  const [updateSuccess, setUpdateSuccess] = useState(false);
+
   const [isUpdating, setIsUpdating] = useState(false);
-  const [hasDisconnected, setHasDisconnected] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("bg-apartment");
@@ -41,27 +45,60 @@ const MakeListing = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (image) {
+      handleFileUpload(image);
+    }
+  }, [image]);
+
+  const handleFileUpload = async (image) => {
+    setIsUpdating(true);
+    const storage = getStorage(app);
+    const fileName = new Date().getTime() + image.name;
+    const storageRef = ref(storage, fileName);
+    const uploadTask = uploadBytesResumable(storageRef, image);
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setImagePercent(Math.round(progress));
+      },
+      (error) => {
+        setImageError(true);
+        setIsUpdating(false);
+      },
+      () => {
+        setImageError(false);
+        setIsUpdating(false);
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setFormData({ ...formData, apartmentImage: downloadURL });
+        });
+      }
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(formData);
   };
 
   const handleChange = (event) => {
-    const { name, type, checked, value } = event.target;
+    const { id, type, checked, value } = event.target;
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [name]: type === "checkbox" ? checked : value,
+      [id]: type === "checkbox" ? checked : value,
     }));
   };
 
   // Event handler for checkbox groups
   const handleCheckboxGroupChange = (event) => {
-    const { name, value } = event.target;
+    const { id, value } = event.target;
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [name]: prevFormData[name].includes(value)
-        ? prevFormData[name].filter((item) => item !== value)
-        : [...prevFormData[name], value],
+      [id]: prevFormData[id].includes(value)
+        ? prevFormData[id].filter((item) => item !== value)
+        : [...prevFormData[id], value],
     }));
   };
 
@@ -269,8 +306,9 @@ const MakeListing = () => {
                 </select>
               </div>
             </div>
-            <div className="w-full mb-4">
-            <h2 className="text-2xl sm:text-3xl font-semibold mb-3 text-red-700">
+
+            <div className="w-full mt-4 mb-4">
+              <h2 className="text-2xl sm:text-3xl font-semibold mb-3 text-red-700">
                 Roomate Preferences
               </h2>
               <label
@@ -343,6 +381,9 @@ const MakeListing = () => {
               </div>
             </div>
             <div className="w-full p-5 space-y-4">
+              <h2 className="text-2xl sm:text-3xl font-semibold mb-3 text-red-700">
+                Building Information
+              </h2>
               {/* Building Type Dropdown */}
               <div className="w-full mb-4">
                 <label
@@ -437,6 +478,37 @@ const MakeListing = () => {
                   className="form-checkbox h-5 w-5 text-gray-600"
                 />
               </div>
+
+              <div className="mb-4">
+                <label
+                  htmlFor="imageUpload"
+                  className="block text-lg font-bold mb-2"
+                >
+                  Upload Apartment Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="apartmentImage"
+                  onChange={(e) => setImage(e.target.files[0])}
+                  className="w-full p-3 bg-slate-100 text-slate-900 rounded-lg"
+                />
+              </div>
+              <p className="text-sm self-center mb-4">
+                {imageError ? (
+                  <span className="text-red-700">
+                    Error uploading image (file size must be less than 2 MB)
+                  </span>
+                ) : imagePercent > 0 && imagePercent < 100 ? (
+                  <span className="text-slate-100">{`Uploading: ${imagePercent} %`}</span>
+                ) : imagePercent === 100 ? (
+                  <span className="text-green-700">
+                    Image uploaded successfully
+                  </span>
+                ) : (
+                  ""
+                )}
+              </p>
             </div>
 
             <button
