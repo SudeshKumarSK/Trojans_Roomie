@@ -40,6 +40,7 @@ const Profile = () => {
   const [formData, setFormData] = useState({});
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [hasDisconnected, setHasDisconnected] = useState(false);
 
   useEffect(() => {
     if (image) {
@@ -146,9 +147,59 @@ const Profile = () => {
       setIsUpdating(false);
     }
   };
+  const handleDisconnect = async () => {
+    setHasDisconnected(true);
+    dispatch(spotifyStart());
+    dispatch(updateUserStart());
+    try {
+      const response = await fetch(
+        `/api/spotify/disconnect/${currentUser._id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      console.log(data);
+
+      if (data.success === false) {
+        dispatch(
+          spotifyFailure({
+            message: data.message || "Something went wrong!",
+          })
+        );
+
+        dispatch(
+          updateUserFailure({
+            message: data.message || "Something went wrong!",
+          })
+        );
+        return;
+      }
+
+      const { spotify_data, user_data } = data;
+      dispatch(updateUserSuccess(user_data));
+      dispatch(spotifyDisconnect());
+    } catch (error) {
+      dispatch(
+        spotifyFailure({
+          message: error.message || "Something went wrong!",
+        })
+      );
+
+      dispatch(
+        updateUserFailure({
+          message: error.message || "Something went wrong!",
+        })
+      );
+    }
+  };
 
   const handleSignOut = async () => {
     try {
+      dispatch(spotifyDisconnect());
       const response = await fetch("/api/auth/signout");
       const data = await response.json();
 
@@ -161,7 +212,7 @@ const Profile = () => {
 
         return;
       }
-      
+
       dispatch(signOut());
     } catch (error) {
       console.log(error);
@@ -291,7 +342,10 @@ const Profile = () => {
           </p>
           <p className="mb-4 text-sm text-red-700">*Terms & Conditions Apply</p>
 
-          <SpotifyAuth />
+          <SpotifyAuth
+            hasDisconnected={hasDisconnected}
+            setHasDisconnected={setHasDisconnected}
+          />
         </div>
       </div>
     </div>
