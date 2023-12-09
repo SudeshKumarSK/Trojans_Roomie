@@ -1,8 +1,7 @@
-import { useSelector } from "react-redux";
-import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import React, { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import PropTypes from "prop-types";
-import { AppBar, Tabs, Tab, Box, Typography } from "@mui/material";
+import { AppBar, Tabs, Tab, Box } from "@mui/material";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import UserInfo from "./UserInfo";
 import SpotifyDetails from "./SpotifyDetails";
@@ -15,10 +14,12 @@ function TabPanel(props) {
     <div
       role="tabpanel"
       hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
       {...other}
       style={{ marginTop: "20px", padding: "10px" }}
     >
-      {value === index && <Box>{children}</Box>}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -32,10 +33,12 @@ TabPanel.propTypes = {
 const ListingsCard = ({ listing }) => {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false); // Track favorite status
-  const compatibilityScore = listing.compatibilityScore.toFixed(2);
   const favoriteListings = useSelector(
     (state) => state.favorite.favoriteListings
+  );
+
+  const isFavorite = favoriteListings.some(
+    (favListing) => favListing.listing_id === listing.listing_id
   );
 
   const handleChange = (event, newValue) => {
@@ -44,12 +47,13 @@ const ListingsCard = ({ listing }) => {
 
   const handleFavorite = () => {
     if (isFavorite) {
-      dispatch(removeFavorite(listing));
+      dispatch(removeFavorite({ listing_id: listing.listing_id }));
     } else {
       dispatch(addFavorite(listing));
     }
-    setIsFavorite(!isFavorite);
   };
+
+  const compatibilityScore = listing.compatibilityScore.toFixed(2);
 
   return (
     <div
@@ -76,7 +80,7 @@ const ListingsCard = ({ listing }) => {
           alt={`${listing.user.username}'s profile`}
           style={{ width: "50px", height: "50px", borderRadius: "50%" }}
         />
-        <h1 className="text-red-700 font-bold text-xl6775455780130">
+        <h1 className="text-red-700 font-bold text-xl">
           {listing.user.username}
         </h1>
         <div
@@ -105,14 +109,13 @@ const ListingsCard = ({ listing }) => {
         Compatibility: {compatibilityScore}%
       </div>
 
-      <AppBar position="relative">
+      <AppBar position="static" color="default">
         <Tabs
           value={activeTab}
           onChange={handleChange}
           indicatorColor="secondary"
           textColor="inherit"
           variant="fullWidth"
-          aria-label="full width tabs example"
         >
           <Tab label="User Info" />
           <Tab label="Spotify" />

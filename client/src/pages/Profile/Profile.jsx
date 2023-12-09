@@ -27,6 +27,7 @@ import {
 } from "../../redux/spotify/spotifySlice";
 
 import SpotifyAuth from "../../components/SpotifyAuth";
+import FavoritesList from "../../components/FavoritesList";
 import spotifyIcon from "../../assets/spotify_final.png";
 import "./profile.css";
 
@@ -298,6 +299,10 @@ const Profile = () => {
             setHasDisconnected={setHasDisconnected}
           />
         </div>
+      </div>
+      <div>
+        {/* Other Profile content */}
+        <FavoritesList /> {/* Include the FavoritesList component */}
       </div>
     </div>
   );
