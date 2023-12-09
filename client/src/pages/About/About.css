@@ -1,0 +1,36 @@
+.about-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+  }
+  
+  .about-container h1, .about-container h2 {
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  .about-container p {
+    color: #666;
+    line-height: 1.6;
+  }
+  
+  .team ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .team li {
+    margin-bottom: 5px;
+  }
+  
+  footer {
+    margin-top: auto;
+    padding: 20px;
+    font-size: 0.9em;
+  }
+  
