@@ -97,8 +97,8 @@ Express - The web application framework for Node.js
 MongoDB - The database platform used
 
 ### Authors
-[Sudesh Kumar Santhosh Kumar](santhosh@usc.edu)
-[Zongdao Wen](zongdaow@usc.edu)
+1. [Sudesh Kumar Santhosh Kumar](santhosh@usc.edu)
+2. [Zongdao Wen](zongdaow@usc.edu)
 
 ### License
 This project is licensed under the MIT License - see the LICENSE file for details.
