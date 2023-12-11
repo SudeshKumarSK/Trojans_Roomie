@@ -3,7 +3,7 @@ import MapModal from "./MapModal"; // Import the MapModal component
 import axios from "axios";
 
 const getLatLngFromAddress = async (address) => {
-  const googleApiKey = "AIzaSyDhVFg_kBcKM85uCGy79eD3ast88QzsONY"; // Replace with your actual Google Maps API key
+  const googleApiKey = import.meta.env.VITE_GOOGLE_API_KEY; // Replace with your actual Google Maps API key
   const gcpBaseUrl = "https://maps.googleapis.com/maps/api/geocode/json";
 
   const gcpParams = {
@@ -126,7 +126,7 @@ const ApartmentDetails = ({ apartmentData }) => {
         <MapModal
           show={showMapModal}
           onClose={toggleMapModal}
-          googleApiKey={"AIzaSyDhVFg_kBcKM85uCGy79eD3ast88QzsONY"}
+          googleApiKey={import.meta.env.VITE_GOOGLE_API_KEY}
           latitude={latitude}
           longitude={longitude}
         />
