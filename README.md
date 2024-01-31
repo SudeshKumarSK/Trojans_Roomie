@@ -89,6 +89,7 @@ FIREBASE_SERVICE_ACCOUNT = "base64 converted Firebase service account details"
 ```
 ### Deployment
 We have deployed our project using google cloud. So you can create an account on gCloud and use gcloud app deploy to deploy this project. make sure to change the redirect uri after deploying the project.
+Deployed at https://last-project-407600.wl.r.appspot.com/
 
 ### Built With
 React - The web framework used
