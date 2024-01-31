@@ -4,8 +4,15 @@ import { useSelector } from "react-redux";
 
 const Header = () => {
   const { currentUser } = useSelector((state) => state.user);
+  const headerStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    zIndex: 1000,
+  };
   return (
-    <div className="bg-zinc-800">
+    <div style={headerStyle} className="bg-zinc-800">
       <div className="flex flex-col sm:flex-row justify-between items-center p-2 sm:p-4 ">
         <div className="flex justify-start">
           <Link to="/">
@@ -36,7 +43,7 @@ const Header = () => {
               Make Listing
             </li>
           </Link>
-        
+
           <Link to="/profile">
             {currentUser ? (
               <img

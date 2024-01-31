@@ -10,4 +10,5 @@
   background-image: url("../../assets/usc_night.jpeg");
   background-size: cover;
   background-repeat: no-repeat;
+  background-attachment: fixed;
 }

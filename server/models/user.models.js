@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import Listing from './ListingSchema.js';
+import { listingSchema } from './ListingSchema.js'; // adjust the path as needed
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -60,8 +60,13 @@ const userSchema = new mongoose.Schema({
             user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
             score: Number,
         }],
-        default: [] 
-    }
+        default: []
+    },
+    listings: {
+        type: [listingSchema],
+        default: [] // Explicitly set an empty array as the default
+    },
+
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
